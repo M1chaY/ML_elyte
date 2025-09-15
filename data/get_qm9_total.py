@@ -35,7 +35,7 @@ for filepath in tqdm(xyz_files, desc="处理文件"):
         mol_data = {
             'file_name': filepath.split('/')[-1],  # 只保留文件名
             'mol_len': int(lines[0]),
-            'atom_coords': '\n'.join(lines[2:-4]),
+            'atom_coords': '\n'.join(lines[2:-3]),
             'vibrationalfrequence': lines[-3],
             'smiles_basic': smiles_basic,
             'smiles_stereo': smiles_stereo,
