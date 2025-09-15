@@ -10,9 +10,14 @@ This script demonstrates the basic workflow:
 """
 
 import os
+import sys
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+
+# Add parent directory to path to import ml_elyte
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from ml_elyte import QM9Dataset, MolecularDataLoader, MolecularFeaturizer, RegressionMetrics
 from ml_elyte.models import MLPRegressor, MLModel
 
