@@ -6,7 +6,7 @@ import os
 prop_names = ['mol_id', 'A', 'B', 'C', 'miu', 'alpha', 'homo', 'lumo', 'gap', 'R2', 'zpve', 'Uo', 'U', 'H', 'G', 'Cv']
 
 # 生成文件路径列表（1-2000）
-file_paths = [f'../raw/qm9_xyz/dsgdb9nsd_{i:06d}.xyz' for i in range(1, 501)]
+file_paths = [f'../raw/qm9_xyz/dsgdb9nsd_{i:06d}.xyz' for i in range(1, 301)]
 
 # 存储数据
 data_list = []
@@ -57,7 +57,7 @@ df = df.drop(columns=['mol_id'])
 df['inchi_basic'] = df['inchi_basic'].str.replace('InChI=', '', regex=False)
 df['inchi_stereo'] = df['inchi_stereo'].str.replace('InChI=', '', regex=False)
 
-df.to_csv('qm9_demo_0.5k.csv', index=False)
+df.to_csv('qm9_demo.csv', index=False)
 
 print(f"提取完成: {len(df)} 个分子")
 print(f"数据结构: {df.shape}")
