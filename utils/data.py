@@ -1,45 +1,8 @@
 import pandas as pd
 import numpy as np
-import re
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import torch
-
-
-def _safe_float_convert(value_str):
-    """安全转换字符串为浮点数，处理科学计数法格式
-
-    Args:
-        value_str: 字符串形式的数值
-
-    Returns:
-        float: 转换后的浮点数
-    """
-    if isinstance(value_str, (int, float)):
-        return float(value_str)
-
-    value_str = str(value_str).strip()
-
-    # 标准科学计数法
-    try:
-        return float(value_str)
-    except ValueError:
-        pass
-
-    # Mathematica风格科学计数法 (1.23*^-4)
-    mathematica_match = re.match(r'([+-]?\d*\.?\d+)\*\^([+-]?\d+)', value_str)
-    if mathematica_match:
-        mantissa = float(mathematica_match.group(1))
-        exponent = int(mathematica_match.group(2))
-        return mantissa * (10 ** exponent)
-
-    # 移除特殊字符后重试
-    cleaned = re.sub(r'[^\d.eE+-]', '', value_str)
-    try:
-        return float(cleaned)
-    except ValueError:
-        print(f"Warning: Cannot convert '{value_str}', using default 0.0")
-        return 0.0
 
 
 class QM9DataExtractor:
@@ -68,7 +31,7 @@ class QM9DataExtractor:
         row = self.df.iloc[idx]
         smiles = row['smiles_stereo']
 
-        # 解析坐标信息
+        # 解析坐标信息（数据已在提取时处理过科学计数法）
         atom_coords_str = row['atom_coords']
         lines = atom_coords_str.strip().split('\n')
         atoms = []
@@ -78,20 +41,14 @@ class QM9DataExtractor:
         for line in lines:
             parts = line.split('\t')
             atoms.append(parts[0])
+            coordinates.append([float(parts[1]), float(parts[2]), float(parts[3])])
+            charges.append(float(parts[4]))
 
-            x = _safe_float_convert(parts[1])
-            y = _safe_float_convert(parts[2])
-            z = _safe_float_convert(parts[3])
-            charge = _safe_float_convert(parts[4])
-
-            coordinates.append([x, y, z])
-            charges.append(charge)
-
-        # 解析属性信息
+        # 解析属性信息（数据已在提取时处理过科学计数法）
         properties = {}
         property_vector = []
         for prop in self.property_columns:
-            value = _safe_float_convert(row[prop])
+            value = float(row[prop])
             properties[prop] = value
             property_vector.append(value)
 
