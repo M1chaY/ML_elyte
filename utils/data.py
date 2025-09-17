@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 from rdkit import Chem
-from rdkit.Chem import AllChem
+from rdkit.Chem import rdDistGeom
 import torch
+
 
 
 class QM9DataExtractor:
@@ -17,7 +18,7 @@ class QM9DataExtractor:
         """获取完整分子信息"""
         # 解析标识符为索引
         if isinstance(identifier, str):
-            mask = self.df['smiles'] == identifier
+            mask = self.df['smiles_gdb'] == identifier
             if not mask.any():
                 raise ValueError(f"SMILES '{identifier}' not found")
             idx = mask.idxmax()
@@ -29,7 +30,7 @@ class QM9DataExtractor:
             raise TypeError("Identifier must be int or str")
 
         row = self.df.iloc[idx]
-        smiles = row['smiles']
+        smiles = row['smiles_gdb']
 
         # 解析坐标信息（数据已在提取时处理过科学计数法）
         atom_coords_str = row['atom_coords']
@@ -54,14 +55,14 @@ class QM9DataExtractor:
 
         return {
             'coordinates_data': {
-                'smiles': smiles,
+                'smiles_gdb': smiles,
                 'atoms': atoms,
                 'coordinates': np.array(coordinates),
                 'charges': np.array(charges),
                 'num_atoms': len(atoms)
             },
             'properties_data': {
-                'smiles': smiles,
+                'smiles_gdb': smiles,
                 'properties': properties,
                 'property_vector': np.array(property_vector)
             }
@@ -69,7 +70,7 @@ class QM9DataExtractor:
 
     def get_smiles_list(self):
         """获取所有SMILES字符串列表"""
-        return self.df['smiles'].tolist()
+        return self.df['smiles_gdb'].tolist()
 
     def get_data_by_smiles(self, target_smiles):
         """通过SMILES字符串获取分子数据"""
@@ -115,7 +116,7 @@ class MoleculeToGraph:
                 mol = Chem.MolFromSmiles(smiles)
                 if mol:
                     mol = Chem.AddHs(mol)
-                    AllChem.EmbedMolecule(mol, randomSeed=42)
+                    rdDistGeom.EmbedMolecule(mol, randomSeed=42)
             except:
                 mol = None
 
