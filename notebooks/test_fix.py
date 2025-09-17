@@ -3,7 +3,7 @@
 
 import sys
 sys.path.append('..')
-from utils.data import QM9DataExtractor, safe_float_convert
+from data import QM9DataExtractor, safe_float_convert
 
 # 测试安全转换函数
 print("=== 测试安全数值转换函数 ===")
