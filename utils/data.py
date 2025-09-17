@@ -17,7 +17,7 @@ class QM9DataExtractor:
         """获取完整分子信息"""
         # 解析标识符为索引
         if isinstance(identifier, str):
-            mask = self.df['smiles_stereo'] == identifier
+            mask = self.df['smiles'] == identifier
             if not mask.any():
                 raise ValueError(f"SMILES '{identifier}' not found")
             idx = mask.idxmax()
@@ -29,7 +29,7 @@ class QM9DataExtractor:
             raise TypeError("Identifier must be int or str")
 
         row = self.df.iloc[idx]
-        smiles = row['smiles_stereo']
+        smiles = row['smiles']
 
         # 解析坐标信息（数据已在提取时处理过科学计数法）
         atom_coords_str = row['atom_coords']
@@ -69,7 +69,7 @@ class QM9DataExtractor:
 
     def get_smiles_list(self):
         """获取所有SMILES字符串列表"""
-        return self.df['smiles_stereo'].tolist()
+        return self.df['smiles'].tolist()
 
     def get_data_by_smiles(self, target_smiles):
         """通过SMILES字符串获取分子数据"""
