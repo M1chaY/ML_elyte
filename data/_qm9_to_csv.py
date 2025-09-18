@@ -71,13 +71,13 @@ for filepath in tqdm(xyz_files, desc="处理文件"):
 
         # 解析SMILES（倒数第二行，两个版本）
         smiles_line = lines[-2].split('\t')
-        smiles_basic = smiles_line[0] if len(smiles_line) > 0 else ""
-        smiles_stereo = smiles_line[1] if len(smiles_line) > 1 else ""
+        smiles_gdb = smiles_line[0] if len(smiles_line) > 0 else ""
+        smiles_b3lyp = smiles_line[1] if len(smiles_line) > 1 else ""
 
         # 解析InChI（最后一行，两个版本）
         inchi_line = lines[-1].split('\t')
-        inchi_basic = inchi_line[0] if len(inchi_line) > 0 else ""
-        inchi_stereo = inchi_line[1] if len(inchi_line) > 1 else ""
+        inchi_corina = inchi_line[0] if len(inchi_line) > 0 else ""
+        inchi_b3lyp = inchi_line[1] if len(inchi_line) > 1 else ""
 
         # 处理原子坐标数据
         coord_lines = lines[2:-3]  # 从第3行到倒数第4行
@@ -99,13 +99,13 @@ for filepath in tqdm(xyz_files, desc="处理文件"):
         # 构建数据字典 - 使用Any类型以兼容int、str和float
         mol_data: Dict[str, Any] = {
             # 'mol_id': mol_id,
-            'smiles': smiles_stereo,
-            # 'smiles_basic': smiles_basic,
+            'smiles_gdb': smiles_gdb,
+            'smiles_b3lyp': smiles_b3lyp,
             # 'mol_len': int(lines[0]),  # Atoms数量
             'atom_coords': '\n'.join(processed_coords),
             'vibrationalfrequence': lines[-3],  # 振动频率
-            # 'inchi_basic': inchi_basic,
-            # 'inchi_stereo': inchi_stereo,
+            # 'inchi_corina': inchi_corina,
+            # 'inchi_b3lyp': inchi_b3lyp,
             # 'file_name': filepath.split('/')[-1].replace('\\', '/')  # 处理Windows路径
         }
 
@@ -126,27 +126,14 @@ for filepath in tqdm(xyz_files, desc="处理文件"):
         print(f"处理文件 {filepath} 时出错: {e}")
         # 可选：打印更详细的调试信息
         import traceback
-
         traceback.print_exc()
 
 # 转换为DataFrame并保存
 df = pd.DataFrame(data_list)
-print(f"\n处理完成: {len(df)} 个分子")
-print(f"数据结构: {df.shape}")
-print(f"列名: {df.columns.tolist()}")
-print("\n前5行数据预览:")
-print(df[['smiles', 'A', 'B', 'C']].head())
 
 # 保存为多种格式
 df.to_csv('raw/qm9.csv', index=False)
-print(f"\n数据已保存到 data/raw/qm9.csv")
-
-# 如果需要保存为parquet格式（需要pyarrow或fastparquet）
-# try:
-#     df.to_parquet('qm9.parquet', compression='gzip')
-#     print(f"数据已保存到 qm9.parquet")
-# except Exception as e:
-#     print(f"保存parquet格式失败（可能需要安装pyarrow）: {e}")
+print(f"\n数据已保存到 raw/qm9.csv")
 
 # 结束后释放内存
 del df
