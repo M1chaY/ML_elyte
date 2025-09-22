@@ -1,160 +1,185 @@
 from rdkit import Chem
 from rdkit.Chem import rdmolops
 from itertools import combinations_with_replacement
+from collections import defaultdict
 
 
-def generate_alkyls(max_carbons):
-    """生成烷基基团"""
-    alkyls = []
-
-    # 基本直链烷基
-    for n in range(1, min(max_carbons + 1, 8)):
-        alkyls.append(("C" * n, n))
-
-    # 分支烷基
-    if max_carbons >= 3:
-        alkyls.append(("C(C)C", 3))  # 异丙基
-    if max_carbons >= 4:
-        alkyls.extend([("CC(C)C", 4), ("C(C)(C)C", 4)])  # 异丁基，叔丁基
-    if max_carbons >= 5:
-        alkyls.extend([("CC(C)CC", 5), ("CCC(C)C", 5), ("C(C)CCC", 5)])
-
-    return alkyls
-
-
-def build_quaternary_smiles(substituents):
-    """正确构建季铵离子SMILES - 氮在中心连接四个基团"""
-    # 对于季铵离子，格式应该是 [N+](R1)(R2)(R3)R4
-    # 第一个基团不用括号，后面三个用括号
+def _build_r4n_smiles(substituents):
+    """构建季铵离子SMILES字符串"""
     if len(substituents) != 4:
         return None
 
-    # 按长度排序，把最简单的基团放第一个（可选）
-    sorted_subs = sorted(substituents)
+    # 将第一个替基作为主链，其他作为分支
+    main_chain = substituents[0]
+    branches = substituents[1:]
 
-    first = sorted_subs[0]
-    others = sorted_subs[1:]
-
-    # 构建SMILES
-    other_parts = ''.join(f'({sub})' if len(sub) > 1 or '(' in sub else f'({sub})' for sub in others)
-    smiles = f'[N+]{other_parts}{first}'
-
-    return smiles
+    # 构造 [N+](R1)(R2)(R3)R4 格式
+    branch_part = ''.join(f'({r})' for r in branches)
+    return f'[N+]{branch_part}{main_chain}'
 
 
-def test_quaternary_construction():
-    """测试季铵离子构建"""
-    print("=== 测试季铵离子构建 ===")
+def _validate_molecule(smiles):
+    """验证分子结构的有效性"""
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if not mol:
+            return False, None
 
-    test_cases = [
-        (["C", "C", "C", "C"], "四甲基铵"),
-        (["C", "C", "C", "CC"], "三甲基乙基铵"),
-        (["C", "C", "CC", "CC"], "二甲基二乙基铵"),
-        (["CC", "CC", "CC", "CC"], "四乙基铵"),
-    ]
+        # 检查分子电荷是否为+1
+        if rdmolops.GetFormalCharge(mol) != 1:
+            return False, None
 
-    for substituents, name in test_cases:
-        smiles = build_quaternary_smiles(substituents)
-        print(f"{name}: {substituents} -> {smiles}")
+        # 检查是否存在四价氮原子
+        for atom in mol.GetAtoms():
+            if (atom.GetSymbol() == 'N' and
+                    atom.GetFormalCharge() == 1 and
+                    atom.GetDegree() == 4):
+                return True, mol
 
-        if smiles:
-            try:
-                mol = Chem.MolFromSmiles(smiles)
-                if mol:
-                    charge = rdmolops.GetFormalCharge(mol)
-                    carbons = sum(1 for atom in mol.GetAtoms() if atom.GetSymbol() == 'C')
-                    canonical = Chem.MolToSmiles(mol)
-                    print(f"  验证: {canonical} (C{carbons}, 电荷={charge})")
+        return False, None
 
-                    # 检查氮原子的连接数
-                    for atom in mol.GetAtoms():
-                        if atom.GetSymbol() == 'N':
-                            degree = atom.GetDegree()
-                            print(f"  氮原子连接数: {degree}")
-                            break
-                else:
-                    print(f"  ✗ RDKit解析失败")
-            except Exception as e:
-                print(f"  ✗ 错误: {e}")
-        print()
+    except Exception:
+        return False, None
 
 
-def generate_all_quaternary(max_carbons=12):
-    """生成所有季铵阳离子"""
-    alkyls = generate_alkyls(max_carbons)
-    results = set()
+def _get_canonical_info(mol):
+    """获取标准化信息"""
+    canonical_smiles = Chem.MolToSmiles(mol)
+    carbon_count = sum(1 for atom in mol.GetAtoms() if atom.GetSymbol() == 'C')
+    return canonical_smiles, carbon_count
 
-    print(f"可用烷基: {[f'{a[0]}(C{a[1]})' for a in alkyls[:10]]}{'...' if len(alkyls) > 10 else ''}")
 
-    for total_c in range(4, max_carbons + 1):
-        print(f"生成 C{total_c}...")
-        count = 0
+class R4NGenerator:
+    """季铵离子(R4N+)化合物生成器"""
 
-        for combo in combinations_with_replacement(alkyls, 4):
-            if sum(alkyl[1] for alkyl in combo) == total_c:
-                substituents = [alkyl[0] for alkyl in combo]
-                smiles = build_quaternary_smiles(substituents)
+    def __init__(self, max_carbons):
+        self.max_carbons = max_carbons
+        self.alkyl_groups = self._generate_alkyl_groups()
 
-                if smiles:
-                    try:
-                        mol = Chem.MolFromSmiles(smiles)
-                        if mol and rdmolops.GetFormalCharge(mol) == 1:
-                            # 验证氮原子确实连接了4个基团
-                            n_degree = 0
-                            for atom in mol.GetAtoms():
-                                if atom.GetSymbol() == 'N' and atom.GetFormalCharge() == 1:
-                                    n_degree = atom.GetDegree()
-                                    break
+    def _generate_alkyl_groups(self):
+        """系统性生成烷基基团"""
+        alkyls = []
 
-                            if n_degree == 4:  # 确保氮连接4个基团
-                                canonical = Chem.MolToSmiles(mol)
-                                carbon_count = sum(1 for atom in mol.GetAtoms() if atom.GetSymbol() == 'C')
+        # 直链烷基 C1-C7
+        for n in range(1, min(self.max_carbons + 1, 8)):
+            alkyls.append(("C" * n, n))
 
-                                if canonical not in [r[1] for r in results]:
-                                    results.add((carbon_count, canonical))
-                                    count += 1
-                                    if count <= 3:  # 只显示前几个例子
-                                        print(f"  {substituents} -> {canonical}")
-                    except:
-                        pass
+        # 常见分支烷基（仅当碳数足够时添加）
+        branched = [
+            ("C(C)C", 3),  # 异丙基
+            ("CC(C)C", 4),  # 异丁基
+            ("C(C)(C)C", 4),  # 叔丁基
+            ("CC(C)CC", 5),  # 异戊基
+            ("CCC(C)C", 5),  # 仲戊基
+            ("C(C)CCC", 5),  # 新戊基
+        ]
 
-        print(f"  C{total_c}: {count} 个")
+        for smiles, carbons in branched:
+            if carbons <= self.max_carbons:
+                alkyls.append((smiles, carbons))
 
-    return sorted(list(results))
+        return alkyls
+
+    def generate_compounds(self):
+        """生成所有可能的季铵离子化合物"""
+        unique_compounds = set()
+        carbon_distribution = defaultdict(int)
+
+        print(f"Use {len(self.alkyl_groups)} alkyl groups to build R4N+ cations...")
+
+        # 遍历所有4个烷基的组合（允许重复）
+        for combo in combinations_with_replacement(self.alkyl_groups, 4):
+            total_carbons = sum(alkyl[1] for alkyl in combo)
+
+            # 跳过碳原子数超限的组合
+            if total_carbons > self.max_carbons:
+                continue
+
+            # 提取烷基SMILES
+            substituents = [alkyl[0] for alkyl in combo]
+
+            # 构建季铵离子
+            smiles = _build_r4n_smiles(substituents)
+            if not smiles:
+                continue
+
+            # 验证分子结构
+            is_valid, mol = _validate_molecule(smiles)
+            if not is_valid:
+                continue
+
+            # 获取标准化信息
+            canonical_smiles, carbon_count = _get_canonical_info(mol)
+
+            # 添加到结果集（自动去重）
+            if canonical_smiles not in {compound[1] for compound in unique_compounds}:
+                unique_compounds.add((carbon_count, canonical_smiles))
+                carbon_distribution[carbon_count] += 1
+
+        return sorted(unique_compounds), dict(carbon_distribution)
+
+    def save_results(self, compounds, filename=None):
+        """保存结果到CSV文件"""
+        if filename is None:
+            filename = f"dataset_r4n_c{self.max_carbons}.csv"
+
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write("Index,Num_c,SMILES\n")
+            for i, (carbon_count, smiles) in enumerate(compounds, 1):
+                f.write(f"{i},{carbon_count},{smiles}\n")
+
+        print(f"Result has been saved to {filename}")
+        return filename
+
+
+def print_statistics(compounds, carbon_distribution):
+    """打印统计信息"""
+    total_compounds = len(compounds)
+    print(f"\nGenerating reports:")
+    print(f"Total R4N+ Cation: {total_compounds}")
+    print(f"Distribution of the num of carbon atoms:")
+
+    for carbons in sorted(carbon_distribution.keys()):
+        count = carbon_distribution[carbons]
+        percentage = (count / total_compounds * 100) if total_compounds > 0 else 0
+        print(f"  {carbons}C: {count} ({percentage:.1f}%)")
 
 
 def main():
-    # 首先测试构建逻辑
-    test_quaternary_construction()
+    print("R4N+ Cation Generator")
+    print("LET'S GO, Damn!")
+    print("=" * 50)
 
-    # 生成季铵离子
-    max_c = int(input("输入最大碳原子数: "))
-    results = generate_all_quaternary(max_c)
+    # 获取用户输入
+    while True:
+        try:
+            max_carbons = int(input("Plz input the max num of carbon atoms (Suggestion: 4-20): "))
+            if max_carbons < 4:
+                print("Error: R4N+ needs at least 4 carbons.")
+                continue
+            if max_carbons > 30:
+                confirm = input("Warning: Too many max_carbons might take long time, continue？(y/n): ")
+                if confirm.lower() != 'y':
+                    continue
+            break
+        except ValueError:
+            print("Error: plz input a valid integer.")
 
-    print(f"\n总共生成: {len(results)} 个季铵阳离子")
+    # 生成化合物
+    generator = R4NGenerator(max_carbons)
+    compounds, carbon_distribution = generator.generate_compounds()
 
-    # 统计
-    from collections import Counter
-    carbon_dist = Counter(r[0] for r in results)
-    print("\n碳数分布:")
-    for c in sorted(carbon_dist.keys()):
-        print(f"  C{c}: {carbon_dist[c]} 个")
+    # 显示统计信息
+    print_statistics(compounds, carbon_distribution)
 
-    # 显示全部结果
-    print(f"\n所有季铵阳离子:")
-    for i, (carbons, smiles) in enumerate(results, 1):
-        print(f"{i:3d}. C{carbons}: {smiles}")
+    # 保存结果
+    generator.save_results(compounds, filename=f'data/r4n_smiles_c{max_carbons}.csv')
 
-    # 保存
-    # 用标准写入模式，确保兼容性
-    with open("correct_quaternary_ammonium.csv", "w", encoding="utf-8") as f:
-        f.write("序号,碳数,SMILES\n")
-        for i, (carbons, smiles) in enumerate(results, 1):
-            # 如需保存浮点数属性，建议用: f"{float_value:.8f}"
-            f.write(f"{i},{carbons},{smiles}\n")
-
-    print(f"\n保存到 correct_quaternary_ammonium.csv")
+    print(f"\n{len(compounds)} R4N+ Cation Generated.")
 
 
 if __name__ == "__main__":
     main()
+    # 释放资源
+    import gc
+    gc.collect()

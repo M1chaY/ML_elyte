@@ -1,4 +1,4 @@
-序号,碳数,SMILES
+Index,Num_c,SMILES
 1,4,C[N+](C)(C)C
 2,5,CC[N+](C)(C)C
 3,6,CC(C)[N+](C)(C)C
