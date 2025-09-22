@@ -33,21 +33,45 @@ class MoleculeToGraph:
         charges = coords_data['charges']
         num_atoms = len(atoms)
 
-        # 尝试创建RDKit分子对象
+        # 尝试创建RDKit分子对象，但添加更严格的检查
         mol = None
+        use_rdkit = False
+
         if smiles:
             try:
-                mol = Chem.MolFromSmiles(smiles)
-                if mol:
-                    mol = Chem.AddHs(mol)
-                    rdDistGeom.EmbedMolecule(mol, randomSeed=42)
-            except:
+                # 先不添加氢原子，检查原子数量是否匹配
+                mol_temp = Chem.MolFromSmiles(smiles)
+                if mol_temp and mol_temp.GetNumAtoms() == num_atoms:
+                    mol = Chem.AddHs(mol_temp)
+                    # 再次检查添加氢后的原子数量
+                    if mol.GetNumAtoms() == num_atoms:
+                        rdDistGeom.EmbedMolecule(mol, randomSeed=42)
+                        use_rdkit = True
+                    else:
+                        # 如果添加氢后数量不匹配，使用不添加氢的版本
+                        mol = mol_temp
+                        if mol.GetNumAtoms() == num_atoms:
+                            use_rdkit = True
+                        else:
+                            mol = None
+                            use_rdkit = False
+                else:
+                    mol = None
+                    use_rdkit = False
+            except Exception as e:
                 mol = None
+                use_rdkit = False
+                print(f"RDKit处理SMILES失败: {smiles}, 错误: {str(e)}")
 
         # 构建节点特征
         node_features = []
         for i, (atom_symbol, coord, charge) in enumerate(zip(atoms, coordinates, charges)):
-            rdkit_atom = mol.GetAtomWithIdx(i) if mol else None
+            rdkit_atom = None
+            if use_rdkit and mol and i < mol.GetNumAtoms():
+                try:
+                    rdkit_atom = mol.GetAtomWithIdx(i)
+                except:
+                    rdkit_atom = None
 
             # 原子类型 one-hot编码
             atom_onehot = [0] * len(self.atom_types)
@@ -56,36 +80,49 @@ class MoleculeToGraph:
 
             # 杂化类型 one-hot编码
             hybrid_onehot = [0] * len(self.hybridization_types)
-            if rdkit_atom and rdkit_atom.GetHybridization() in self.hybridization_types:
-                hybrid_onehot[self.hybridization_types.index(rdkit_atom.GetHybridization())] = 1
+            if rdkit_atom:
+                try:
+                    if rdkit_atom.GetHybridization() in self.hybridization_types:
+                        hybrid_onehot[self.hybridization_types.index(rdkit_atom.GetHybridization())] = 1
+                except:
+                    pass
 
             # 组合特征：原子类型 + 坐标 + 电荷 + 度数 + 杂化类型
-            node_feat = (atom_onehot + coord.tolist() + [charge] +
-                         [rdkit_atom.GetDegree() if rdkit_atom else 0] + hybrid_onehot)
+            degree = rdkit_atom.GetDegree() if rdkit_atom else 0
+            node_feat = (atom_onehot + coord.tolist() + [charge] + [degree] + hybrid_onehot)
             node_features.append(node_feat)
 
         # 构建边特征
         edge_indices = []
         edge_features = []
 
-        if mol:
+        if use_rdkit and mol:
             # 使用RDKit化学键信息
             for bond in mol.GetBonds():
-                i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
-                distance = np.linalg.norm(coordinates[i] - coordinates[j])
+                try:
+                    i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
 
-                # 键类型 one-hot编码
-                bond_onehot = [0] * len(self.bond_types)
-                if bond.GetBondType() in self.bond_types:
-                    bond_onehot[self.bond_types.index(bond.GetBondType())] = 1
+                    # 确保索引在有效范围内
+                    if i >= num_atoms or j >= num_atoms:
+                        continue
 
-                edge_feat = ([distance] + bond_onehot +
-                             [1 if bond.GetIsConjugated() else 0] +
-                             [1 if bond.IsInRing() else 0])
+                    distance = np.linalg.norm(coordinates[i] - coordinates[j])
 
-                # 添加双向边
-                edge_indices.extend([[i, j], [j, i]])
-                edge_features.extend([edge_feat, edge_feat])
+                    # 键类型 one-hot编码
+                    bond_onehot = [0] * len(self.bond_types)
+                    if bond.GetBondType() in self.bond_types:
+                        bond_onehot[self.bond_types.index(bond.GetBondType())] = 1
+
+                    edge_feat = ([distance] + bond_onehot +
+                                 [1 if bond.GetIsConjugated() else 0] +
+                                 [1 if bond.IsInRing() else 0])
+
+                    # 添加双向边
+                    edge_indices.extend([[i, j], [j, i]])
+                    edge_features.extend([edge_feat, edge_feat])
+                except Exception as e:
+                    # 跳过有问题的键
+                    continue
         else:
             # 基于距离阈值创建边
             distance_threshold = 2.0
@@ -110,5 +147,6 @@ class MoleculeToGraph:
             'edge_index': torch.tensor(edge_index, dtype=torch.long),
             'edge_attr': torch.tensor(edge_features, dtype=torch.float),
             'num_nodes': len(node_features),
-            'num_edges': len(edge_features)
+            'num_edges': len(edge_features),
+            'used_rdkit': use_rdkit  # 添加标记表示是否使用了RDKit信息
         }
