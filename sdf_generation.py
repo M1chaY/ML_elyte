@@ -1,4 +1,3 @@
-from __future__ import annotations
 import csv
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
@@ -15,35 +14,41 @@ def _iter_smiles(csv_path: Path) -> Iterable[Tuple[str, str, str]]:
 
 
 def _build_3d_mol(smiles: str) -> Optional[Chem.Mol]:
-    """Build a 3D molecule from SMILES with ETKDG + MMFF/UFF."""
+    # 从SMILES生成3D分子
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return None
 
+    # 加入氢原子
     mol = Chem.AddHs(mol)
 
-    # Try ETKDGv3, then ETKDGv2 as fallback.
+    # 生成3D构象
     params = AllChem.ETKDGv3()
     params.randomSeed = 0xF00D
-    status = AllChem.EmbedMolecule(mol, params)
-    if status != 0:
-        params2 = AllChem.ETKDGv2()
-        params2.randomSeed = 0xF00D
-        status = AllChem.EmbedMolecule(mol, params2)
-        if status != 0:
+    AllChem.EmbedMolecule(mol, params)
+
+    embed_result = AllChem.EmbedMolecule(mol, params)
+    if embed_result == -1:
+        # If ETKDG fails, try basic embedding
+        embed_result = AllChem.EmbedMolecule(mol)
+        if embed_result == -1:
+            print(f"Warning: Could not generate 3D coordinates for SMILES: {smiles}")
             return None
 
-    # Optimize geometry: prefer MMFF94, fallback to UFF when parameters missing.
+    # Try MMFF optimization first
     try:
-        if AllChem.MMFFHasAllMoleculeParams(mol):
-            AllChem.MMFFOptimizeMolecule(mol, maxIters=200)
-        else:
-            AllChem.UFFOptimizeMolecule(mol, maxIters=200)
-    except Exception:
+        mmff_result = AllChem.MMFFOptimizeMolecule(mol)
+        if mmff_result == 1:  # 1 indicates failure, 0 indicates success
+            # If MMFF fails, try UFF as fallback
+            AllChem.UFFOptimizeMolecule(mol)
+    except ValueError as e:
+        # If MMFF completely fails, try UFF
         try:
-            AllChem.UFFOptimizeMolecule(mol, maxIters=200)
-        except Exception:
-            return None
+            AllChem.UFFOptimizeMolecule(mol)
+        except ValueError:
+            print(f"Warning: Could not optimize molecule for SMILES: {smiles}")
+            # Return the molecule anyway - it has 3D coordinates even if not optimized
+            pass
 
     return mol
 
@@ -65,13 +70,13 @@ def _process_molecule_and_save(idx: str, num_c: str, smi: str, output_dir: Path)
         return False
 
     # Set name and properties. Materials Studio reads SDF data fields.
-    mol.SetProp("_Name", f"R4N_{idx}_C{num_c}")
+    mol.SetProp("_Name", f"{idx}_{smi}")
     mol.SetProp("Index", str(idx))
     mol.SetProp("Num_c", str(num_c))
     mol.SetProp("SMILES", smi)
 
     # Define output path for this molecule
-    output_file = output_dir / f"R4N_{idx}_C{num_c}.sdf"
+    output_file = output_dir / f"{idx}_{smi}.sdf"
 
     return _write_single_sdf(mol, output_file)
 
@@ -80,7 +85,7 @@ def main() -> None:
     """Entry point: convert CSV SMILES to 3D SDF files."""
     root = Path(__file__).resolve().parent
     csv_path = root / "data" / "r4n_smiles_c20.csv"
-    output_dir = root / "data" / "3d_molecules"
+    output_dir = root / "data" / "sdf"
 
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV not found: {csv_path}")

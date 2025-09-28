@@ -5,8 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="19a2d86a-50ad-47b8-8b18-eee661360d35" name="更改" comment="Ver0.4">
-      <change afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/test.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/sdf_generation.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,6 +54,7 @@
     &quot;Python.R4NX.executor&quot;: &quot;Run&quot;,
     &quot;Python._qm9_to_csv.executor&quot;: &quot;Run&quot;,
     &quot;Python._qm9_to_csv_demo.executor&quot;: &quot;Run&quot;,
+    &quot;Python.charge.executor&quot;: &quot;Run&quot;,
     &quot;Python.get_coords_demo.executor&quot;: &quot;Run&quot;,
     &quot;Python.get_qm9_demo.executor&quot;: &quot;Run&quot;,
     &quot;Python.get_qm9_demo0.5k.executor&quot;: &quot;Run&quot;,
@@ -60,6 +62,7 @@
     &quot;Python.get_qm9_total.executor&quot;: &quot;Run&quot;,
     &quot;Python.qa_generation.executor&quot;: &quot;Run&quot;,
     &quot;Python.qm9.executor&quot;: &quot;Run&quot;,
+    &quot;Python.sdf_generation.executor&quot;: &quot;Run&quot;,
     &quot;Python.smiles_generation.executor&quot;: &quot;Run&quot;,
     &quot;Python.test.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
@@ -87,7 +90,7 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+    <configuration name="sdf_generation" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="ML_elyte" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -102,7 +105,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="SCRIPT_NAME" value="D:\Github\ML_elyte\sdf_generation.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -144,7 +147,8 @@
       <workItem from="1758537908951" duration="1527000" />
       <workItem from="1758539454663" duration="8583000" />
       <workItem from="1758868094336" duration="407000" />
-      <workItem from="1758868550218" duration="5723000" />
+      <workItem from="1758868550218" duration="5957000" />
+      <workItem from="1759038853156" duration="6187000" />
     </task>
     <task id="LOCAL-00001" summary="Ver0.1&#10;完成了QM9数据集的准备，请在https://pan.baidu.com/s/1_-znKVnv5nNL2T-MXuyqFA?pwd=yynb中提取源数据文件。">
       <option name="closed" value="true" />
@@ -210,7 +214,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758547367748</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Ver0.4">
+      <option name="closed" value="true" />
+      <created>1758874525774</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1758874525774</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -230,12 +242,14 @@
     <SUITE FILE_PATH="coverage/ML_elyte$qm9.coverage" NAME="qm9 覆盖结果" MODIFIED="1757927465737" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data/raw" />
     <SUITE FILE_PATH="coverage/ML_elyte$get_coords_demo.coverage" NAME="get_coords_demo 覆盖结果" MODIFIED="1757934344822" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data/demo" />
     <SUITE FILE_PATH="coverage/ML_elyte$get_qm9_demo.coverage" NAME="get_qm9_demo 覆盖结果" MODIFIED="1758097209054" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data/demo" />
+    <SUITE FILE_PATH="coverage/ML_elyte$charge.coverage" NAME="charge 覆盖结果" MODIFIED="1759045059539" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ML_elyte$R4NX.coverage" NAME="R4NX 覆盖结果" MODIFIED="1758356749255" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ML_elyte$2k_set.coverage" NAME="2k_set 覆盖结果" MODIFIED="1757932720633" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data/demo" />
     <SUITE FILE_PATH="coverage/ML_elyte$get_qm9_total.coverage" NAME="get_qm9_total 覆盖结果" MODIFIED="1758096581573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data" />
     <SUITE FILE_PATH="coverage/ML_elyte$_qm9_to_csv.coverage" NAME="_qm9_to_csv 覆盖结果" MODIFIED="1758177273582" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data" />
     <SUITE FILE_PATH="coverage/ML_elyte$test.coverage" NAME="test 覆盖结果" MODIFIED="1758873851723" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ML_elyte$get_qm9_demo1k5.coverage" NAME="get_qm9_demo1k5 覆盖结果" MODIFIED="1757933664880" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data/demo" />
+    <SUITE FILE_PATH="coverage/ML_elyte$sdf_generation.coverage" NAME="sdf_generation 覆盖结果" MODIFIED="1759045048804" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ML_elyte$qa_generation.coverage" NAME="qa_generation 覆盖结果" MODIFIED="1758537977984" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ML_elyte$_qm9_to_csv_demo.coverage" NAME="_qm9_to_csv_demo 覆盖结果" MODIFIED="1758105004554" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/data/demo" />
   </component>
