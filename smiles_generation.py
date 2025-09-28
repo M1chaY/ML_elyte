@@ -123,10 +123,16 @@ class R4NGenerator:
         if filename is None:
             filename = f"dataset_r4n_c{self.max_carbons}.csv"
 
+        # 计算索引的宽度：与总条数的位数一致，例如 1-9 => 1 位，10-99 => 2 位
+        total = len(compounds)
+        index_width = max(1, len(str(total)))
+
         with open(filename, 'w', encoding='utf-8') as f:
             f.write("Index,Num_c,SMILES\n")
             for i, (carbon_count, smiles) in enumerate(compounds, 1):
-                f.write(f"{i},{carbon_count},{smiles}\n")
+                # 使用前导零补齐，例如 0001、0002
+                index_str = f"{i:0{index_width}d}"
+                f.write(f"{index_str},{carbon_count},{smiles}\n")
 
         print(f"Result has been saved to {filename}")
         return filename
