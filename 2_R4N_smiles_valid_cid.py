@@ -41,8 +41,7 @@ def validate_against_pubchem(smiles, verbose: bool = False, idx: Optional[int] =
 
 def main():
     # 读取SMILES列表和对应的元数据
-    filename = 'r4n_smiles_c20'
-    df = pd.read_csv(f'data/{filename}.csv')
+    df = pd.read_csv(f'data/r4n_smiles_c20.csv')
     lists = df['SMILES'].tolist()
 
     # 实时输出：传入 idx 和 total，并开启 verbose
@@ -62,7 +61,7 @@ def main():
     final_df = final_df.dropna(subset=['cid'])
 
     # 保存结果
-    final_df.to_csv(f'data/{filename}_pubchem_validated.csv', index=False)
+    final_df.to_csv(f'data/r4n_c20_validated_cid.csv', index=False)
     
 if __name__ == "__main__":
     main()

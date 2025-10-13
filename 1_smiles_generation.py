@@ -60,23 +60,9 @@ class R4NGenerator:
         """系统性生成烷基基团"""
         alkyls = []
 
-        # 直链烷基 C1-C7
-        for n in range(1, min(self.max_carbons + 1, 8)):
+        # 直链烷基 C1-C16
+        for n in range(1, min(self.max_carbons + 1, 17)):
             alkyls.append(("C" * n, n))
-
-        # 常见分支烷基（仅当碳数足够时添加）
-        branched = [
-            ("C(C)C", 3),  # 异丙基
-            ("CC(C)C", 4),  # 异丁基
-            ("C(C)(C)C", 4),  # 叔丁基
-            ("CC(C)CC", 5),  # 异戊基
-            ("CCC(C)C", 5),  # 仲戊基
-            ("C(C)CCC", 5),  # 新戊基
-        ]
-
-        for smiles, carbons in branched:
-            if carbons <= self.max_carbons:
-                alkyls.append((smiles, carbons))
 
         return alkyls
 
