@@ -73,7 +73,7 @@ def _zero_pad_index(raw_idx: str, width: int, fallback_seq: int) -> str:
 def main() -> None:
     """Entry point: convert CSV SMILES to 3D and write EACH molecule into its own .mol file."""
     root = Path(__file__).resolve().parent
-    csv_path = root / "data" / "r4n_smiles_c16.csv"
+    csv_path = root / "data" / "r4n_smiles_c16_pubchem_validated.csv"
     output_dir = root / "data" / "mol"
 
     # Ensure the output directory exists
